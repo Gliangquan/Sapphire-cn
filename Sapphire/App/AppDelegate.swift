@@ -256,11 +256,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         NearbyConnectionManager.shared.deviceDisplayName = settingsModel.settings.neardropDeviceDisplayName
         observeSettings()
 
-        if ProcessInfo.processInfo.environment["PERFMON"] == "1" || UserDefaults.standard.bool(forKey: "enablePerfMonitor") {
-            ProcessCPUMonitor.shared.startPeriodicReporting(interval: 60)
-            print("[PerfMon] CPU performance monitor enabled. Report logs every 60s.")
-        }
-
         Task {
             await SubscriptionManager.shared.bootstrap()
             await MainActor.run {
@@ -1219,6 +1214,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             continuityManager.openWidgets()
             return
         }
+        if url.host == "settings" {
+            openSettingsWindow()
+            return
+        }
         musicManager.spotifyOfficialAPI.handleRedirect(url: url)
         musicManager.tidalAPI.handleRedirect(url: url)
     }
@@ -1248,9 +1247,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
                     accessibilityDescription: "Sapphire Launchpad"
                 )
                 let menu = NSMenu()
-                menu.addItem(NSMenuItem(title: "Show Launchpad", action: #selector(showLaunchpadAction), keyEquivalent: ""))
+                menu.addItem(NSMenuItem(title: loc("Settings"), action: #selector(openSettingsMenuAction), keyEquivalent: ","))
+                menu.addItem(NSMenuItem(title: loc("Show Launchpad"), action: #selector(showLaunchpadAction), keyEquivalent: ""))
                 menu.addItem(.separator())
-                menu.addItem(NSMenuItem(title: "Quit Sapphire", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+                menu.addItem(NSMenuItem(title: loc("Quit Sapphire"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
                 for item in menu.items { item.target = self }
                 statusItem?.menu = menu
             }
@@ -1258,6 +1258,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             NSStatusBar.system.removeStatusItem(item)
             statusItem = nil
         }
+    }
+
+    @objc private func openSettingsMenuAction() {
+        openSettingsWindow()
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        openSettingsWindow()
+        return true
     }
 
     @objc private func showLaunchpadAction() {
@@ -1341,7 +1350,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         }
 
         for screen in targetScreens {
-            guard let screenDisplayID = displayID(for: screen) else { continue }
+            guard let screenDisplayID = displayID(for: screen) else {
+                continue
+            }
             let existing = notchWindows.first { ($0 as? DynamicFocusWindow)?.displayID == screenDisplayID }
             if let existing {
                 existing.sharingType = settingsModel.settings.hideFromScreenSharing ? .none : .readOnly
@@ -1436,6 +1447,28 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             controllerView
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+
+        // Pre-initialize environment dependencies in topological order before liveActivityManager
+        _ = lockScreenState
+        _ = systemHUDManager
+        _ = musicManager
+        _ = audioDeviceManager
+        _ = bluetoothManager
+        _ = notificationManager
+        _ = desktopManager
+        _ = focusModeManager
+        _ = eyeBreakManager
+        _ = timerManager
+        _ = focusSessionManager
+        _ = contentPickerHelper
+        _ = geminiLiveManager
+        _ = settingsModel
+        _ = activeAppMonitor
+        _ = batteryEstimator
+        _ = calendarService
+        _ = weatherActivityViewModel
+        _ = intelligenceViewModel
+        _ = liveActivityManager
 
         let hosting = PassthroughHostingView(
             rootView: container

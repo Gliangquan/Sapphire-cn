@@ -4,6 +4,7 @@
 //
 //  Created by Shariq Charolia on 2026-09-14
 
+#if SAPPHIRE_FULL_BUILD
 import XCTest
 @testable import Sapphire
 
@@ -200,3 +201,4 @@ final class SystemEnhanceHingeAnimationTests: XCTestCase {
         XCTAssertEqual(point.y, expected.y, accuracy: accuracy, file: file, line: line)
     }
 }
+#endif

@@ -4,21 +4,13 @@
 //
 //  Created by Shariq Charolia on 2026-09-14
 
-import FirebaseAppCheck
-import FirebaseCore
+import Foundation
 
 @MainActor
 enum FirebaseBootstrap {
     private(set) static var isConfigured = false
 
     static func configureIfNeeded() {
-        guard !isConfigured else { return }
-        #if DEBUG
-        AppCheck.setAppCheckProviderFactory(AppCheckDebugProviderFactory())
-        #else
-        AppCheck.setAppCheckProviderFactory(DeviceCheckProviderFactory())
-        #endif
-        FirebaseApp.configure()
-        isConfigured = true
+        // No-op: local build does not require Firebase cloud telemetry or auth
     }
 }

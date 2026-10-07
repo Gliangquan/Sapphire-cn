@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SettingsView: View {
     private let settings: SettingsModel
+    @ObservedObject private var locManager = LocalizationManager.shared
     @State private var editingSession: SettingsEditingSession
     @State private var selectedSection: SettingsSection? = .general
     @State private var showAccountPane = false
@@ -43,6 +44,8 @@ struct SettingsView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .environmentObject(settings)
         .environmentObject(editingSession)
+        .environmentObject(locManager)
+        .environment(\.locale, locManager.locale)
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: NotchConfiguration.settingsWindowCornerRadius, style: .continuous))
         .ignoresSafeArea(.container, edges: .top)

@@ -14,14 +14,16 @@ struct SettingsSidebarGroup: Identifiable {
 }
 
 extension SettingsSection {
-    static let sidebarGroups: [SettingsSidebarGroup] = [
-        .init(title: "General", sections: [.general, .keyboardShortcuts, .bluetoothUnlock, .intelligence, .neardrop, .continuity]),
-        .init(title: "Notch", sections: [.appearance, .widgets, .liveActivities, .lockScreen, .notifications, .hud]),
-        .init(title: "Widgets & Content", sections: [.music, .weather, .calendar, .sports, .finance, .battery, .audio, .bluetooth, .shortcuts, .fileShelf, .notes, .clipboard, .mirror, .caffeine]),
-        .init(title: "System & Utilities", sections: [.systemEnhance, .snapZones, .dockLayouts, .mediaOptimizer, .mouse, .monitoring, .devActivity, .emoji, .archives, .apps, .storage]),
-        .init(title: "Focus & Security", sections: [.eyeBreak, .focusSession, .appLock]),
-        .init(title: "", sections: [.about])
-    ]
+    static var sidebarGroups: [SettingsSidebarGroup] {
+        [
+            .init(title: loc("General"), sections: [.general, .keyboardShortcuts, .bluetoothUnlock, .intelligence, .neardrop, .continuity]),
+            .init(title: loc("Notch"), sections: [.appearance, .widgets, .liveActivities, .lockScreen, .notifications, .hud]),
+            .init(title: loc("Widgets & Content"), sections: [.music, .weather, .calendar, .sports, .finance, .battery, .audio, .bluetooth, .shortcuts, .fileShelf, .notes, .clipboard, .mirror, .caffeine]),
+            .init(title: loc("System & Utilities"), sections: [.systemEnhance, .snapZones, .dockLayouts, .mediaOptimizer, .mouse, .monitoring, .devActivity, .emoji, .archives, .apps, .storage]),
+            .init(title: loc("Focus & Security"), sections: [.eyeBreak, .focusSession, .appLock]),
+            .init(title: "", sections: [.about])
+        ]
+    }
 }
 
 struct SettingsSidebarView: View {
@@ -29,6 +31,7 @@ struct SettingsSidebarView: View {
     @Binding var showAccountPane: Bool
     let onQuit: () -> Void
     @ObservedObject private var subscriptionManager = SubscriptionManager.shared
+    @ObservedObject private var locManager = LocalizationManager.shared
     @State private var searchText = ""
 
     private var filteredGroups: [SettingsSidebarGroup] {
@@ -45,16 +48,10 @@ struct SettingsSidebarView: View {
     }
 
     private var lockedSections: Set<SettingsSection> {
-        Set(SettingsSection.sidebarGroups
-            .flatMap(\.sections)
-            .filter { section in
-                section.requiredPremiumFeature
-                    .map { !subscriptionManager.hasAccess(to: $0) } ?? false
-            })
+        []
     }
 
     var body: some View {
-        let lockedSections = lockedSections
         let filteredGroups = filteredGroups
 
         VStack(alignment: .leading, spacing: 0) {
@@ -69,18 +66,7 @@ struct SettingsSidebarView: View {
             .padding(.horizontal, 12)
             .padding(.bottom, 12)
 
-            // MARK: 2. Apple ID Style Account Sidebar Card (Below Search Bar)
-            SidebarAccountCardView(
-                subscriptionManager: subscriptionManager,
-                isSelected: showAccountPane
-            ) {
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    showAccountPane = true
-                    selectedSection = nil
-                }
-            }
-
-            // MARK: 3. Settings Sections list
+            // MARK: 2. Settings Sections list
             List(selection: Binding(
                 get: { selectedSection },
                 set: { value in
@@ -95,12 +81,12 @@ struct SettingsSidebarView: View {
                         ForEach(group.sections) { section in
                             SidebarRowView(
                                 section: section,
-                                isPremiumLocked: lockedSections.contains(section)
+                                isPremiumLocked: false
                             )
                             .tag(section)
                         }
                     } header: {
-                        Text(group.title)
+                        Text(loc(group.title))
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(.secondary)
                     }
@@ -119,7 +105,7 @@ struct SettingsSidebarView: View {
             }
 
             if !searchText.isEmpty && filteredGroups.isEmpty {
-                Text("No settings matched \"\(searchText)\".")
+                Text(locFormat("No settings matched \"%@\".", searchText))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 16)
@@ -136,7 +122,7 @@ struct SettingsSidebarView: View {
                         .frame(width: 30, height: 30)
                         .background(Color.red.opacity(0.15))
                         .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                    Text("Quit")
+                    Text(loc("Quit"))
                         .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(.white)
                 }

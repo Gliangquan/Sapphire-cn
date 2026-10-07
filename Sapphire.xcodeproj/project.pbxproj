@@ -512,6 +512,7 @@
 			membershipExceptions = (
 				App/Info.plist,
 				Services/Music/MediaRemoteAdapter.framework,
+				Stubs/GeminiLiveManagerStub.swift,
 			);
 			target = DA46CF752DCBCA0000F00EC5 /* Sapphire */;
 		};
@@ -1283,6 +1284,7 @@
 			knownRegions = (
 				en,
 				Base,
+				"zh-Hans",
 			);
 			mainGroup = DA46CF6D2DCBCA0000F00EC5;
 			minimizedProjectReferenceProxies = 1;
@@ -2072,7 +2074,6 @@
 				ENABLE_RESOURCE_ACCESS_CONTACTS = YES;
 				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
 				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = YES;
-				EXCLUDED_SOURCE_FILE_NAMES = "*/Sapphire/Stubs/*";
 				FRAMEWORK_SEARCH_PATHS = "$(PROJECT_DIR)/Sapphire/Services/Music";
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/PrivateHeaders";
@@ -2155,7 +2156,6 @@
 				ENABLE_RESOURCE_ACCESS_CONTACTS = YES;
 				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
 				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = YES;
-				EXCLUDED_SOURCE_FILE_NAMES = "*/Sapphire/Stubs/*";
 				FRAMEWORK_SEARCH_PATHS = "$(PROJECT_DIR)/Sapphire/Services/Music";
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/PrivateHeaders";

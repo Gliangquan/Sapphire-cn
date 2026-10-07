@@ -13,19 +13,18 @@ import UniformTypeIdentifiers
 
 struct SettingsDetailView: View {
     @ObservedObject private var subscriptionManager = SubscriptionManager.shared
+    @ObservedObject private var locManager = LocalizationManager.shared
     var selectedSection: SettingsSection?
 
     private var isSelectedSectionLocked: Bool {
-        selectedSection?.isPremiumLocked ?? false
+        false
     }
 
     var body: some View {
         VStack {
-            if let selectedSection, isSelectedSectionLocked {
-                LockedSettingsSectionView(section: selectedSection)
-            } else {
-                settingsPane(for: selectedSection)
-            }
+            settingsPane(for: selectedSection)
+                .id("pane-\(selectedSection?.rawValue ?? "")-\(locManager.revision)")
+                .environment(\.locale, locManager.locale)
         }
         .animation(.easeOut(duration: 0.15), value: selectedSection)
         .animation(.easeOut(duration: 0.15), value: subscriptionManager.activeTier)
@@ -80,7 +79,7 @@ struct SettingsDetailView: View {
                     Image(systemName: "sidebar.left")
                         .font(.system(size: 50))
                         .foregroundStyle(.tertiary)
-                    Text("Select a category")
+                    Text(loc("Select a category"))
                         .font(.title)
                         .foregroundStyle(.secondary)
                 }
@@ -1552,11 +1551,12 @@ struct GeneralSettingsView: View {
     @EnvironmentObject var settings: SettingsEditingSession
     @State private var showingCustomConfig = false
     @ObservedObject private var appFetcher = SystemAppFetcher.shared
+    @ObservedObject private var locManager = LocalizationManager.shared
 
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 20) {
-                Text("General")
+                Text(loc("General"))
                     .font(.largeTitle.bold())
                     .padding(.bottom)
 
@@ -1581,13 +1581,13 @@ struct GeneralSettingsView: View {
                 if settings.settings.capsLockHorizontalLockEnabled {
                     Divider().padding(.leading, 60)
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("Allow in Apps")
+                        Text(loc("Allow in Apps"))
                             .font(.headline)
                             .padding([.horizontal])
                         AppTogglesListView(
                             isEnabled: { app in capsLockAppBinding(for: app, isBrowser: app.isBrowser) },
                             maxHeight: 360,
-                            browsersSectionTitle: "Browsers (Disabled by Default)",
+                            browsersSectionTitle: loc("Browsers (Disabled by Default)"),
                             onSelectAll: setAllApps
                         )
                     }
@@ -1597,6 +1597,29 @@ struct GeneralSettingsView: View {
             }.modifier(SettingsContainerModifier())
 
                 SettingsCard(title: "System") {
+
+                    HStack {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(loc("Language"))
+                                .font(.system(size: 14, weight: .medium))
+                            Text(loc("Choose the display language for Sapphire."))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        Picker("", selection: $settings.settings.appLanguage) {
+                            ForEach(AppLanguage.allCases) { lang in
+                                Text(lang.displayName).tag(lang)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(width: 200)
+                        .onChange(of: settings.settings.appLanguage) { newLang in
+                            LocalizationManager.shared.setLanguage(newLang)
+                        }
+                    }
+                    .padding()
+                    Divider().padding(.leading, 20)
 
                     ToggleRow(title: "Launch at Login", description: "Start Sapphire automatically when you log in to your Mac.", isOn: $settings.settings.launchAtLogin)
                     Divider().padding(.leading, 20)
@@ -1625,7 +1648,7 @@ struct GeneralSettingsView: View {
                     Divider().padding(.leading, 20)
 
                     HStack {
-                        Text("Show Notch On")
+                        Text(loc("Show Notch On"))
                         Spacer()
                         Picker("", selection: $settings.settings.notchDisplayTarget) {
                             ForEach(NotchDisplayTarget.allCases) { target in
@@ -1634,7 +1657,7 @@ struct GeneralSettingsView: View {
                         }.labelsHidden().frame(width: 200)
                     }.padding()
 
-                    Text("Choose which display Sapphire should attach to when multiple screens are connected.")
+                    Text(loc("Choose which display Sapphire should attach to when multiple screens are connected."))
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.horizontal)
@@ -1652,8 +1675,8 @@ struct GeneralSettingsView: View {
                         Divider().padding(.leading, 20)
                         HStack {
                             VStack(alignment: .leading, spacing: 3) {
-                                Text("Island Top Offset")
-                                Text("Distance from the top edge on notchless displays.")
+                                Text(loc("Island Top Offset"))
+                                Text(loc("Distance from the top edge on notchless displays."))
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -1679,20 +1702,20 @@ struct GeneralSettingsView: View {
 
                 }
 
-                SettingsCard(title: "Widget Transitions", description: "Control the visual effects when switching between widgets inside the expanded notch.") {
+                SettingsCard(title: loc("Widget Transitions"), description: loc("Control the visual effects when switching between widgets inside the expanded notch.")) {
 
-                    Toggle("Enable Fade Effect", isOn: $settings.settings.enableWidgetSwitchFade)
+                    Toggle(loc("Enable Fade Effect"), isOn: $settings.settings.enableWidgetSwitchFade)
                         .padding()
                     Divider().padding(.leading, 20)
-                    Toggle("Enable Slide Effect", isOn: $settings.settings.enableWidgetSwitchSlide)
+                    Toggle(loc("Enable Slide Effect"), isOn: $settings.settings.enableWidgetSwitchSlide)
                         .padding()
                     Divider().padding(.leading, 20)
-                    Toggle("Enable Bounce Effect", isOn: $settings.settings.enableWidgetSwitchBounce)
+                    Toggle(loc("Enable Bounce Effect"), isOn: $settings.settings.enableWidgetSwitchBounce)
                         .padding()
                 }
 
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Animation Profile")
+                    Text(loc("Animation Profile"))
                         .font(.headline)
                         .padding([.horizontal, .top])
 
@@ -1702,7 +1725,7 @@ struct GeneralSettingsView: View {
                         .padding(.horizontal)
                         .padding(.bottom, 5)
 
-                    Picker("Animation Profile", selection: $settings.settings.animationProfile) {
+                    Picker(loc("Animation Profile"), selection: $settings.settings.animationProfile) {
                         ForEach(AnimationProfile.allCases) { profile in
                             Text(profile.displayName).tag(profile)
                         }
@@ -1714,10 +1737,10 @@ struct GeneralSettingsView: View {
                     if settings.settings.animationProfile == .custom {
                         VStack(alignment: .leading, spacing: 10) {
                             HStack {
-                                Text("Custom Animation Values")
+                                Text(loc("Custom Animation Values"))
                                     .font(.subheadline.bold())
                                 Spacer()
-                                Button("Reset to Defaults") {
+                                Button(loc("Reset to Defaults")) {
                                     withAnimation {
                                         settings.settings.customAnimationConfiguration = .init()
                                     }
@@ -1727,13 +1750,13 @@ struct GeneralSettingsView: View {
                                 .help("Reset all custom animation values to the 'Snappy' defaults.")
                             }
 
-                            Text("Response: How long the animation takes (lower is faster).\nDamping: How much bounce (1.0 is no bounce).")
+                            Text(loc("Response: How long the animation takes (lower is faster).\nDamping: How much bounce (1.0 is no bounce)."))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                                 .padding(.bottom, 5)
 
                             Group {
-                                Text("Main Transitions").font(.caption.bold()).foregroundColor(.secondary)
+                                Text(loc("Main Transitions")).font(.caption.bold()).foregroundColor(.secondary)
                                 AnimationSliderRow(title: "Expand Response", description: "Opening the main widget view.", value: $settings.settings.customAnimationConfiguration.expandResponse, range: 0.1...1.0)
                                 AnimationSliderRow(title: "Expand Damping", description: "", value: $settings.settings.customAnimationConfiguration.expandDamping, range: 0.4...1.0)
                                 Divider()
@@ -1745,7 +1768,7 @@ struct GeneralSettingsView: View {
                             }
 
                             Group {
-                                Text("Dynamic States").font(.caption.bold()).foregroundColor(.secondary).padding(.top)
+                                Text(loc("Dynamic States")).font(.caption.bold()).foregroundColor(.secondary).padding(.top)
                                 AnimationSliderRow(title: "Hover Response", description: "The small expansion when hovering over the notch.", value: $settings.settings.customAnimationConfiguration.hoverResponse, range: 0.1...1.0)
                                 AnimationSliderRow(title: "Hover Damping", description: "", value: $settings.settings.customAnimationConfiguration.hoverDamping, range: 0.4...1.0)
                                 Divider()
@@ -1754,7 +1777,7 @@ struct GeneralSettingsView: View {
                             }
 
                             Group {
-                                Text("Content & Activities").font(.caption.bold()).foregroundColor(.secondary).padding(.top)
+                                Text(loc("Content & Activities")).font(.caption.bold()).foregroundColor(.secondary).padding(.top)
                                 AnimationSliderRow(title: "Content Transition Response", description: "How widgets appear inside the expanded view.", value: $settings.settings.customAnimationConfiguration.contentTransitionResponse, range: 0.1...1.0)
                                 AnimationSliderRow(title: "Content Transition Damping", description: "", value: $settings.settings.customAnimationConfiguration.contentTransitionDamping, range: 0.4...1.0)
                                 Divider()
@@ -1774,11 +1797,11 @@ struct GeneralSettingsView: View {
                 .animation(.default, value: settings.settings.animationProfile)
 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("Advanced Customization").font(.headline).padding([.top, .horizontal])
+                    Text(loc("Advanced Customization")).font(.headline).padding([.top, .horizontal])
                     ToggleRow(title: "Enable Custom Notch Configuration", description: "Override default appearance and animation values. This may lead to unexpected behavior.", isOn: $settings.settings.useCustomNotchConfiguration)
 
                     if settings.settings.useCustomNotchConfiguration {
-                        Button("Edit Custom Configuration") {
+                        Button(loc("Edit Custom Configuration")) {
                             showingCustomConfig = true
                         }
                         .padding()
@@ -1847,13 +1870,13 @@ struct GeneralSettingsView: View {
     private func descriptionForCurrentProfile() -> String {
         switch settings.settings.animationProfile {
         case .snappy:
-            return "The default. A quick and responsive feel with minimal bounce."
+            return loc("The default. A quick and responsive feel with minimal bounce.")
         case .bouncy:
-            return "A playful and energetic animation with noticeable bounce."
+            return loc("A playful and energetic animation with noticeable bounce.")
         case .calm:
-            return "A slower, more graceful animation with a very gentle ease."
+            return loc("A slower, more graceful animation with a very gentle ease.")
         case .custom:
-            return "Fine-tune every animation parameter to your exact liking."
+            return loc("Fine-tune every animation parameter to your exact liking.")
         }
     }
 }
@@ -1869,9 +1892,9 @@ fileprivate struct AnimationSliderRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     VStack(alignment: .leading) {
-                        Text(title)
+                        Text(loc(title))
                         if !description.isEmpty {
-                            Text(description)
+                            Text(loc(description))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -10222,7 +10245,7 @@ struct AboutSettingsView: View {
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 20) {
-                Text("About").font(.largeTitle.bold()).padding(.bottom)
+                Text(loc("About")).font(.largeTitle.bold()).padding(.bottom)
 
                 HStack {
                     Image(nsImage: NSApp.applicationIconImage)
@@ -10300,7 +10323,7 @@ struct AboutSettingsView: View {
                 settingsBackupPane
 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("Permissions Overview").font(.headline).padding([.horizontal, .top])
+                    Text(loc("Permissions Overview")).font(.headline).padding([.horizontal, .top])
                     ForEach(permissionsManager.allPermissions) { permission in
                         PermissionStatusRowView(permission: permission)
                         if permission.id != permissionsManager.allPermissions.last?.id { Divider().padding(.leading, 60) }
@@ -10382,11 +10405,11 @@ struct AboutSettingsView: View {
             }
         }
         .confirmationDialog(
-            "Reset all settings?",
+            loc("Reset all settings?"),
             isPresented: $showingResetConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Reset Settings", role: .destructive) {
+            Button(loc("Reset Settings"), role: .destructive) {
                 settingsModel.resetAllSettings()
                 backupStatusMessage = BackupStatusMessage(
                     icon: "arrow.counterclockwise.circle.fill",
@@ -10394,9 +10417,9 @@ struct AboutSettingsView: View {
                     message: "All Sapphire settings were reset to defaults."
                 )
             }
-            Button("Cancel", role: .cancel) {}
+            Button(loc("Cancel"), role: .cancel) {}
         } message: {
-            Text("This will replace your current preferences across the app.")
+            Text(loc("This will replace your current preferences across the app."))
         }
     }
 
@@ -10406,7 +10429,7 @@ struct AboutSettingsView: View {
                 SettingsIconBadge(systemImage: "externaldrive.badge.timemachine", color: .blue)
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Settings Backup")
+                    Text(loc("Settings Backup"))
                         .font(.headline)
                     Text("Save a portable copy of your Sapphire preferences or restore one you exported earlier.")
                         .font(.caption)
@@ -10423,7 +10446,7 @@ struct AboutSettingsView: View {
                     backupDocument = settingsModel.makeBackupDocument()
                     isExportingSettings = true
                 } label: {
-                    Label("Export Backup", systemImage: "square.and.arrow.up")
+                    Label(loc("Export Backup"), systemImage: "square.and.arrow.up")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
@@ -10432,7 +10455,7 @@ struct AboutSettingsView: View {
                 Button {
                     isImportingSettings = true
                 } label: {
-                    Label("Restore Backup", systemImage: "square.and.arrow.down")
+                    Label(loc("Restore Backup"), systemImage: "square.and.arrow.down")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
@@ -10462,9 +10485,9 @@ struct AboutSettingsView: View {
 
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Start Fresh")
+                    Text(loc("Start Fresh"))
                         .font(.subheadline.weight(.medium))
-                    Text("Restore all Sapphire preferences to their defaults.")
+                    Text(loc("Restore all Sapphire preferences to their defaults."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -10474,7 +10497,7 @@ struct AboutSettingsView: View {
                 Button(role: .destructive) {
                     showingResetConfirmation = true
                 } label: {
-                    Label("Reset Settings", systemImage: "arrow.counterclockwise")
+                    Label(loc("Reset Settings"), systemImage: "arrow.counterclockwise")
                 }
                 .buttonStyle(.bordered)
                 .tint(.red)
@@ -10495,10 +10518,10 @@ struct AboutSettingsView: View {
             }
 
             VStack(alignment: .leading, spacing: 0) {
-                Text("Release Channel")
+                Text(loc("Release Channel"))
                     .font(.headline)
                     .padding([.horizontal, .top])
-                Text("Choose which update channel to receive releases from.")
+                Text(loc("Choose which update channel to receive releases from."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal)

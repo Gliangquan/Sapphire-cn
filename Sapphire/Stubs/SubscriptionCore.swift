@@ -39,14 +39,15 @@ public struct SubscriptionEntitlements: Codable, Equatable {
     public var features: Set<AppFeature>
     public var expiresAt: Date?
 
-    public static let free = SubscriptionEntitlements(tier: .free, features: [], expiresAt: nil)
+    public static let free = SubscriptionEntitlements(tier: .ultra, features: Set(AppFeature.allCases), expiresAt: nil)
+    public static let unlocked = SubscriptionEntitlements(tier: .ultra, features: Set(AppFeature.allCases), expiresAt: nil)
 }
 
 public enum SubscriptionFeatureCatalog {
-    public static func features(for tier: SubscriptionTier) -> Set<AppFeature> { [] }
+    public static func features(for tier: SubscriptionTier) -> Set<AppFeature> { Set(AppFeature.allCases) }
     public static func minimumTier(for feature: AppFeature) -> SubscriptionTier { .free }
     public static func tierDisplayName(_ tier: SubscriptionTier) -> String { tier.rawValue.capitalized }
-    public static func marketingSubtitle(for tier: SubscriptionTier) -> String { "Includes the core Sapphire experience." }
+    public static func marketingSubtitle(for tier: SubscriptionTier) -> String { "Includes the full Sapphire experience." }
     public static func marketingTierHighlights() -> [(tier: SubscriptionTier, features: [String])] {
         [
             (tier: .free, features: ["Core notch experience"]),
@@ -58,33 +59,33 @@ public enum SubscriptionFeatureCatalog {
 }
 
 public enum SubscriptionAccess {
-    public static func hasAccess(to feature: AppFeature) -> Bool { false }
-    public static func resolvedTier() -> SubscriptionTier { .free }
-    public static func intelligenceDailyRunLimit() -> Int { 8 }
+    public static func hasAccess(to feature: AppFeature) -> Bool { true }
+    public static func resolvedTier() -> SubscriptionTier { .ultra }
+    public static func intelligenceDailyRunLimit() -> Int { 999999 }
 }
 
 public final class SubscriptionManager: ObservableObject {
     public static let shared = SubscriptionManager()
 
-    public var tierGradientColors: [Color] { [.gray, .gray.opacity(0.6)] }
-    public var userInitials: String { "G" }
-    public var tierLabel: String { "Free" }
+    public var tierGradientColors: [Color] { [.blue, .cyan] }
+    public var userInitials: String { "S" }
+    public var tierLabel: String { "Unlocked" }
 
-    @Published public private(set) var entitlements: SubscriptionEntitlements = .free
-    @Published public private(set) var accessibleFeatures: Set<AppFeature> = []
+    @Published public private(set) var entitlements: SubscriptionEntitlements = .unlocked
+    @Published public private(set) var accessibleFeatures: Set<AppFeature> = Set(AppFeature.allCases)
 
     public init() {}
 
-    public var activeTier: SubscriptionTier { entitlements.tier }
-    public var hasCorePlan: Bool { activeTier == .core }
-    public var isSignedIn: Bool { false }
-    public var userDisplayName: String { "Guest" }
-    public var hasBetaSoftwareAccess: Bool { false }
+    public var activeTier: SubscriptionTier { .ultra }
+    public var hasCorePlan: Bool { true }
+    public var isSignedIn: Bool { true }
+    public var userDisplayName: String { "Sapphire" }
+    public var hasBetaSoftwareAccess: Bool { true }
 
-    public func hasAccess(to feature: AppFeature) -> Bool { SubscriptionAccess.hasAccess(to: feature) }
-    public func isFeatureEnabled(_ feature: AppFeature) -> Bool { SubscriptionAccess.hasAccess(to: feature) }
+    public func hasAccess(to feature: AppFeature) -> Bool { true }
+    public func isFeatureEnabled(_ feature: AppFeature) -> Bool { true }
     public func applyLicensedTier(_ tier: SubscriptionTier) {}
-    public func intelligenceDailyRunLimit() -> Int { 8 }
+    public func intelligenceDailyRunLimit() -> Int { 999999 }
     public func bootstrap() async {}
     public func validateSubscriptionStatus() async {}
 }
@@ -96,15 +97,7 @@ public final class FeatureGate {
 
     @discardableResult
     public func require(_ feature: AppFeature, message: String) -> Bool {
-        let post = {
-            NotificationCenter.default.post(
-                name: .subscriptionPaywallRequested,
-                object: nil,
-                userInfo: ["message": message, "feature": feature.rawValue]
-            )
-        }
-        if Thread.isMainThread { post() } else { DispatchQueue.main.async(execute: post) }
-        return false
+        return true
     }
 }
 

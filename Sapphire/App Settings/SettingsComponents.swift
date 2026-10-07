@@ -47,13 +47,14 @@ struct SettingsRowLabel: View {
     let title: String
     var description: String = ""
     var titleFont: Font = .system(size: 14, weight: .medium)
+    @ObservedObject private var locManager = LocalizationManager.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(title)
+            Text(locManager.localized(title))
                 .font(titleFont)
             if !description.isEmpty {
-                Text(description)
+                Text(locManager.localized(description))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -137,12 +138,13 @@ struct IconToggleRow: View {
     let color: Color
     let title: String
     @Binding var isOn: Bool
+    @ObservedObject private var locManager = LocalizationManager.shared
 
     var body: some View {
         HStack(spacing: 15) {
             SettingsIconBadge(systemImage: systemImage, color: color)
 
-            Text(title)
+            Text(locManager.localized(title))
                 .font(.system(size: 14, weight: .medium))
                 .foregroundStyle(.white)
 
@@ -422,14 +424,25 @@ struct SystemAppRowView: View {
 }
 
 struct ClearableSearchField: View {
-    let placeholder: LocalizedStringKey
+    let placeholder: String
     @Binding var text: String
+    @ObservedObject private var locManager = LocalizationManager.shared
+
+    init(placeholder: String, text: Binding<String>) {
+        self.placeholder = placeholder
+        self._text = text
+    }
+
+    init(placeholder: LocalizedStringKey, text: Binding<String>) {
+        self.placeholder = String(describing: placeholder)
+        self._text = text
+    }
 
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
-            TextField(placeholder, text: $text)
+            TextField(locManager.localized(placeholder), text: $text)
                 .textFieldStyle(.plain)
             if !text.isEmpty {
                 Button {
@@ -631,7 +644,7 @@ struct CustomSliderRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(label)
+                Text(loc(label))
                 Spacer()
                 Text(String(format: specifier, draft))
             }
@@ -813,16 +826,27 @@ struct SettingsContainerModifier: ViewModifier {
 }
 
 struct SettingsSectionHeader: View {
-    let title: LocalizedStringKey
-    var description: LocalizedStringKey? = nil
+    let title: String
+    var description: String? = nil
+    @ObservedObject private var locManager = LocalizationManager.shared
+
+    init(title: String, description: String? = nil) {
+        self.title = title
+        self.description = description
+    }
+
+    init(title: LocalizedStringKey, description: LocalizedStringKey? = nil) {
+        self.title = String(describing: title)
+        self.description = description.map { String(describing: $0) }
+    }
 
     var body: some View {
-        Text(title)
+        Text(locManager.localized(title))
             .font(.headline)
             .padding([.top, .horizontal])
             .frame(maxWidth: .infinity, alignment: .leading)
         if let description {
-            Text(description)
+            Text(locManager.localized(description))
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .padding(.horizontal)
@@ -832,9 +856,22 @@ struct SettingsSectionHeader: View {
 }
 
 struct SettingsCard<Content: View>: View {
-    let title: LocalizedStringKey
-    var description: LocalizedStringKey? = nil
+    let title: String
+    var description: String? = nil
     @ViewBuilder let content: Content
+    @ObservedObject private var locManager = LocalizationManager.shared
+
+    init(title: String, description: String? = nil, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.description = description
+        self.content = content()
+    }
+
+    init(title: LocalizedStringKey, description: LocalizedStringKey? = nil, @ViewBuilder content: () -> Content) {
+        self.title = String(describing: title)
+        self.description = description.map { String(describing: $0) }
+        self.content = content()
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {

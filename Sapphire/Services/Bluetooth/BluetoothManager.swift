@@ -44,6 +44,20 @@ class BluetoothManager: NSObject, ObservableObject {
         super.init()
         ud.register(defaults: ["readBTDevice": true, "readBTHID": true, "readIDevice": true, "updateInterval": 1])
 
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAirPodsUpdate(_:)),
+            name: .didUpdateAirPodsBattery,
+            object: nil
+        )
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.setupBluetoothAsync()
+        }
+    }
+
+    private func setupBluetoothAsync() {
         SPBluetoothDataModel.shared.refeshData { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.checkForInitiallyConnectedDevices()
@@ -57,13 +71,6 @@ class BluetoothManager: NSObject, ObservableObject {
         self.connectionNotification = IOBluetoothDevice.register(
             forConnectNotifications: self,
             selector: #selector(deviceConnected(_:device:))
-        )
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleAirPodsUpdate(_:)),
-            name: .didUpdateAirPodsBattery,
-            object: nil
         )
 
         AuthenticationManager.shared.$isScanning

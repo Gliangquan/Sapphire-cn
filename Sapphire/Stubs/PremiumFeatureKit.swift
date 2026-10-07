@@ -10,11 +10,11 @@ import SwiftUI
 
 enum PremiumGate {
     static func hasAccess(_ feature: AppFeature) -> Bool {
-        SubscriptionAccess.hasAccess(to: feature)
+        true
     }
 
     static func isActive(_ feature: AppFeature?, enabled: Bool) -> Bool {
-        enabled && (feature.map(hasAccess) ?? true)
+        enabled
     }
 
     static var accessChanges: AnyPublisher<Void, Never> {
@@ -26,7 +26,7 @@ enum PremiumGate {
 
     @discardableResult
     static func require(_ feature: AppFeature, message: String? = nil) -> Bool {
-        FeatureGate.shared.require(feature, message: message ?? premiumDefaultMessage(for: feature))
+        true
     }
 }
 
@@ -40,7 +40,7 @@ struct PremiumFeatureView<Content: View>: View {
     }
 
     var body: some View {
-        content.disabled(true).opacity(0.45)
+        content
     }
 }
 
@@ -51,8 +51,7 @@ extension View {
 }
 
 func premiumDefaultMessage(for feature: AppFeature) -> String {
-    let tier = SubscriptionFeatureCatalog.minimumTier(for: feature)
-    return "This feature requires Sapphire \(SubscriptionFeatureCatalog.tierDisplayName(tier))."
+    "Unlocked"
 }
 
 extension SettingsModel {
@@ -60,45 +59,31 @@ extension SettingsModel {
         $settings
             .map(enabled)
             .removeDuplicates()
-            .combineLatest(PremiumGate.accessChanges.prepend(()))
-            .map { isOn, _ in isOn && PremiumGate.hasAccess(feature) }
-            .removeDuplicates()
-            .dropFirst()
             .eraseToAnyPublisher()
     }
 
     func isPremiumActive(_ feature: AppFeature, _ enabled: (Settings) -> Bool) -> Bool {
-        PremiumGate.isActive(feature, enabled: enabled(settings))
+        enabled(settings)
     }
 }
 
 extension WidgetType {
     var requiredPremiumFeature: AppFeature? {
-        switch self {
-        case .sports: .sportsWidget
-        case .finance: .financeWidget
-        case .battery: .batteryWidget
-        case .storage: .storageWidgets
-        default: nil
-        }
+        nil
     }
 
     var isPremiumLocked: Bool {
-        requiredPremiumFeature.map { !PremiumGate.hasAccess($0) } ?? false
+        false
     }
 }
 
 extension LiveActivityType {
     var requiredPremiumFeature: AppFeature? {
-        switch self {
-        case .sports: .liveSports
-        case .finance: .financeLiveActivity
-        default: nil
-        }
+        nil
     }
 
     var isPremiumLocked: Bool {
-        requiredPremiumFeature.map { !PremiumGate.hasAccess($0) } ?? false
+        false
     }
 }
 #endif

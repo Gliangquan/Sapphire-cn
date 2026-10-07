@@ -58,10 +58,10 @@ enum AnimationProfile: String, Codable, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
-        case .snappy: "Snappy"
-        case .bouncy: "Bouncy"
-        case .calm: "Calm"
-        case .custom: "Custom"
+        case .snappy: loc("Snappy")
+        case .bouncy: loc("Bouncy")
+        case .calm: loc("Calm")
+        case .custom: loc("Custom")
         }
     }
 }
@@ -521,9 +521,9 @@ enum NotchDisplayTarget: String, Codable, CaseIterable, Identifiable {
     var id: String { self.rawValue }
     var displayName: String {
         switch self {
-        case .macbookDisplay: "MacBook Display Only"
-        case .mainDisplay: "Main Display Only"
-        case .allDisplays: "All Displays"
+        case .macbookDisplay: loc("MacBook Display Only")
+        case .mainDisplay: loc("Main Display Only")
+        case .allDisplays: loc("All Displays")
         }
     }
 }
@@ -952,14 +952,14 @@ struct Settings: Codable, Equatable {
 
     var notchLiveActivityAppearance: NotchAppearanceSettings = .init()
     var launchAtLogin: Bool = true
-    var appLanguage: String = "en"
+    var appLanguage: AppLanguage = .system
     var hapticFeedbackEnabled: Bool = true
     var googleAnalyticsEnabled: Bool = true
     var hideFromScreenSharing: Bool = false
     var notchDisplayTarget: NotchDisplayTarget = .macbookDisplay
     var floatingIslandOnNotchlessDisplays: Bool = false
     var floatingIslandTopOffset: CGFloat = 8
-    var expandOnHover: Bool = false
+    var expandOnHover: Bool = true
     var expandOnHoverDelay: TimeInterval = 0.0
     var capsLockHorizontalLockEnabled: Bool = false
     var capsLockHorizontalLockAppStates: [String: Bool] = [:]
@@ -2212,6 +2212,9 @@ class SettingsModel: ObservableObject {
             }
             revision &+= 1
             guard !isApplyingLoadedSettings else { return }
+            if settings.appLanguage != oldValue.appLanguage {
+                LocalizationManager.shared.setLanguage(settings.appLanguage)
+            }
             if settings.volumeHUDSoundEnabled != oldValue.volumeHUDSoundEnabled {
                 SystemSoundFeedback.isVolumeChangeFeedbackEnabled = settings.volumeHUDSoundEnabled
             }
@@ -2290,6 +2293,7 @@ class SettingsModel: ObservableObject {
         isApplyingLoadedSettings = true
         settings = loaded
         isApplyingLoadedSettings = false
+        LocalizationManager.shared.setLanguage(loaded.appLanguage)
         applyIntelligenceRuntimePreferences(from: loaded)
         brightness = (defaults.object(forKey: Self.brightnessKey) as? NSNumber)?.floatValue ?? loaded.brightness
         lastNotchNavigationStack = defaults.data(forKey: Self.notchNavigationStackKey)
@@ -2828,10 +2832,10 @@ enum GeneralSettingType: String, CaseIterable, Identifiable, Equatable {
     var id: String { self.rawValue }
     var displayName: String {
         switch self {
-        case .expandOnHover: "Expand on Hover"
-        case .swipeToSwitchWidgets: "Swipe to Switch Widgets"
-        case .enableOpeningBounce: "Bounce when Opening Widgets"
-        case .capsLockHorizontalLock: "Lock Cursor Horizontally with Caps Lock"
+        case .expandOnHover: loc("Expand on Hover")
+        case .swipeToSwitchWidgets: loc("Swipe to Switch Widgets")
+        case .enableOpeningBounce: loc("Bounce when Opening Widgets")
+        case .capsLockHorizontalLock: loc("Lock Cursor Horizontally with Caps Lock")
         }
     }
     var systemImage: String {
@@ -2863,11 +2867,11 @@ enum NotchButtonType: String, Codable, Identifiable, Equatable {
 
     var displayName: String {
         switch self {
-        case .settings: "Settings"; case .fileShelf: "File Shelf"; case .notes: "Notes"; case .clipboard: "Clipboard"
-        case .intelligence: "Blip"; case .intelligenceLive: "Gemini";
-        case .focusSession: "Focus";
-        case .caffeine: "Caffeinate"; case .spacer: "Spacer";
-        case .multiAudio: "Multi-Audio (Beta)"; case .battery: "Battery"; case .pin: "Pin"
+        case .settings: loc("Settings"); case .fileShelf: loc("File Shelf"); case .notes: loc("Notes"); case .clipboard: loc("Clipboard")
+        case .intelligence: loc("Blip"); case .intelligenceLive: "Gemini";
+        case .focusSession: loc("Focus");
+        case .caffeine: loc("Caffeinate"); case .spacer: loc("Spacer");
+        case .multiAudio: loc("Multi-Audio (Beta)"); case .battery: loc("Battery"); case .pin: loc("Pin")
         }
     }
 
@@ -3054,8 +3058,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
     }
 
     var isPremiumLocked: Bool {
-        guard let requiredPremiumFeature else { return false }
-        return !SubscriptionAccess.hasAccess(to: requiredPremiumFeature)
+        false
     }
 
     var shortDescription: String {
@@ -3172,7 +3175,47 @@ enum SettingsSection: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .general: "General"; case .systemEnhance: "System Enhance"; case .apps: "Apps"; case .storage: "Storage"; case .widgets: "Widgets"; case .liveActivities: "Live Activities"; case .appearance: "Appearance"; case .lockScreen: "Lock Screen"; case .bluetoothUnlock: "Authentication"; case .shortcuts: "Shortcuts"; case .keyboardShortcuts: "Keyboard Shortcuts"; case .snapZones: "Snap Zones"; case .audio: "Audio"; case .battery: "Battery"; case .bluetooth: "Bluetooth"; case .hud: "HUD"; case .notifications: "Notifications"; case .neardrop: "Nearby Share"; case .continuity: "Android Continuity"; case .fileShelf: "File Shelf"; case .notes: "Notes";        case .clipboard: "Clipboard"; case .emoji: "Emoji"; case .mouse: "Mouse"; case .monitoring: "Monitoring"; case .devActivity: "Dev Activity"; case .archives: "Archives & DMG"; case .mirror: "Mirror"; case .caffeine: "Caffeinate"; case .music: "Music"; case .weather: "Weather";        case .calendar: "Calendar"; case .eyeBreak: "Eye Break"; case .focusSession: "Focus Sessions"; case .appLock: "App Lock"; case .intelligence: "Blip"; case .sports: "Sports"; case .finance: "Finance"; case .dockLayouts: "Dock"; case .mediaOptimizer: "Media Optimizer"; case .about: "About"
+        case .general: loc("General")
+        case .systemEnhance: loc("System Enhance")
+        case .apps: loc("Apps")
+        case .storage: loc("Storage")
+        case .widgets: loc("Widgets")
+        case .liveActivities: loc("Live Activities")
+        case .appearance: loc("Appearance")
+        case .lockScreen: loc("Lock Screen")
+        case .bluetoothUnlock: loc("Authentication")
+        case .shortcuts: loc("Shortcuts")
+        case .keyboardShortcuts: loc("Keyboard Shortcuts")
+        case .snapZones: loc("Snap Zones")
+        case .audio: loc("Audio")
+        case .battery: loc("Battery")
+        case .bluetooth: loc("Bluetooth")
+        case .hud: loc("HUD")
+        case .notifications: loc("Notifications")
+        case .neardrop: loc("Nearby Share")
+        case .continuity: loc("Android Continuity")
+        case .fileShelf: loc("File Shelf")
+        case .notes: loc("Notes")
+        case .clipboard: loc("Clipboard")
+        case .emoji: loc("Emoji")
+        case .mouse: loc("Mouse")
+        case .monitoring: loc("Monitoring")
+        case .devActivity: loc("Dev Activity")
+        case .archives: loc("Archives & DMG")
+        case .mirror: loc("Mirror")
+        case .caffeine: loc("Caffeinate")
+        case .music: loc("Music")
+        case .weather: loc("Weather")
+        case .calendar: loc("Calendar")
+        case .eyeBreak: loc("Eye Break")
+        case .focusSession: loc("Focus Sessions")
+        case .appLock: loc("App Lock")
+        case .intelligence: loc("Blip")
+        case .sports: loc("Sports")
+        case .finance: loc("Finance")
+        case .dockLayouts: loc("Dock")
+        case .mediaOptimizer: loc("Media Optimizer")
+        case .about: loc("About")
         }
     }
 

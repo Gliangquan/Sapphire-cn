@@ -4,35 +4,21 @@
 //
 //  Created by Shariq Charolia on 2026-08-10
 
-import FirebaseAnalytics
-import FirebaseCrashlytics
+import Foundation
 
 @MainActor
 enum SapphireAnalytics {
-    static var isEnabled: Bool {
-        SettingsModel.shared.settings.googleAnalyticsEnabled
-    }
+    static var isEnabled: Bool { false }
 
     static func bootstrap() {
-        guard isEnabled else { return }
-        applyCollectionPreference()
+        // Disabled: local build does not send telemetry
     }
 
     static func applyCollectionPreference() {
-        if isEnabled {
-            FirebaseBootstrap.configureIfNeeded()
-        }
-        guard FirebaseBootstrap.isConfigured else { return }
-        Analytics.setAnalyticsCollectionEnabled(isEnabled)
-        Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(isEnabled)
+        // No-op
     }
 
     static func logEvent(_ name: String, parameters: [String: Any]? = nil) {
-        guard isEnabled else { return }
-
-        if !FirebaseBootstrap.isConfigured {
-            bootstrap()
-        }
-        Analytics.logEvent(name, parameters: parameters)
+        // No-op
     }
 }

@@ -15,15 +15,27 @@ struct GeminiLiveConfiguration {
     }
 
     var model: String {
-        "models/gemini-2.5-flash-native-audio-preview-12-2025"
+        if let custom = UserDefaults.standard.string(forKey: "sapphire.gemini.model"),
+           !custom.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return custom
+        }
+        return "models/gemini-2.5-flash-native-audio-preview-12-2025"
     }
 
     var voiceName: String {
-        "Aoede"
+        if let custom = UserDefaults.standard.string(forKey: "sapphire.gemini.voice"),
+           !custom.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return custom
+        }
+        return "Aoede"
     }
 
     var systemInstruction: String? {
-        "You are Sapphire, a concise voice assistant on macOS. You receive a live view of the user's screen as JPEG frames — look at those frames and talk about what is actually on screen. Speak naturally in short sentences. Never output markdown, headers, or internal reasoning — only speak aloud."
+        if let custom = UserDefaults.standard.string(forKey: "sapphire.gemini.systemPrompt"),
+           !custom.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return custom
+        }
+        return "You are Sapphire, a concise voice assistant on macOS. You receive a live view of the user's screen as JPEG frames — look at those frames and talk about what is actually on screen. Speak naturally in short sentences. Never output markdown, headers, or internal reasoning — only speak aloud."
     }
 }
 

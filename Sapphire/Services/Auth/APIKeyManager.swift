@@ -69,7 +69,6 @@ final class APIKeyManager {
 
     var googleGeminiAPIKey: String {
         let key = geminiAPIKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard Self.isValidGoogleGeminiAPIKey(key) else { return "" }
         return key
     }
 
